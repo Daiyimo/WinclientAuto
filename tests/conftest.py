@@ -16,7 +16,7 @@ import re
 import sys
 import xml.dom.minidom
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 
 import pytest
 
@@ -43,7 +43,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:  # noqa: ARG001
 # ── 失败时自动截图并附加到 Allure 报告 ────────────────────────────────────────
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> Generator:  # type: ignore[type-arg]
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> Generator[Any, None, None]:
     """测试失败时自动截图并附加到 Allure 报告，不产生任何磁盘文件。
 
     兼容所有继承自 BasePage 的 Page Object（持有 ``_page`` 属性），

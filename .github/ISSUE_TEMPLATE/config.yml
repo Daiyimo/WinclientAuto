@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 问题讨论
+    url: https://github.com/Daiyimo/WinclientAuto/discussions
+    about: 有问题或想法请先在 Discussions 中讨论。

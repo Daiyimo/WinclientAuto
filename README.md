@@ -16,7 +16,7 @@ Windows 客户端自动化框架，支持 Electron/CDP、Win32 原生（pywinaut
 ## 目录结构
 
 ```
-winclientAuto/
+WinclientAuto/
 ├── winclient_auto/              # 框架核心
 │   ├── core/
 │   │   ├── base_app.py          # WinClientApp 抽象基类
@@ -38,8 +38,21 @@ winclientAuto/
 │   ├── conftest.py              # 通用 pytest hooks（截图/XML/Allure）
 │   └── framework/               # 框架单元测试（不依赖真实应用）
 │
-└── reports/                     # 测试报告输出目录
-    └── .gitkeep
+├── reports/                     # 测试报告输出目录
+│   └── .gitkeep
+│
+├── .github/                     # GitHub 模板与配置
+│   ├── ISSUE_TEMPLATE/          # Issue 模板（bug report / feature request）
+│   ├── PULL_REQUEST_TEMPLATE.md # PR 模板
+│   └── CODEOWNERS               # 默认 reviewer
+│
+├── LICENSE                      # MIT 许可证
+├── CONTRIBUTING.md              # 贡献指南
+├── SECURITY.md                  # 安全策略
+├── CHANGELOG.md                 # 变更日志
+├── SKILL.md                     # Agent 发现文档
+├── README.md                    # 项目文档
+└── pyproject.toml               # 构建配置与工具链
 ```
 
 ## 安装
@@ -47,6 +60,25 @@ winclientAuto/
 ```bash
 pip install -e ".[dev]"
 playwright install chromium
+```
+
+## 卸载
+
+```bash
+pip uninstall winclient-auto
+```
+
+## 更新
+
+```bash
+pip install --upgrade winclient-auto
+```
+
+开发模式下：
+
+```bash
+git pull
+pip install -e ".[dev]"
 ```
 
 ## 快速开始
@@ -164,3 +196,11 @@ allure open reports/allure-report
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `WCA_TEST_DELAY` | 用例间隔秒数 | `3` |
+
+## 贡献
+
+欢迎贡献！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解开发环境搭建、代码风格和 PR 流程。
+
+## 安全
+
+发现安全漏洞请参阅 [SECURITY.md](SECURITY.md) 了解负责任的报告流程。

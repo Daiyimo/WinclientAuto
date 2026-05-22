@@ -89,3 +89,7 @@ class WinClientApp(ABC):
         子类若需自定义 kill 逻辑可覆盖此方法。
         """
         self.close()
+        if hasattr(self, "_process_name") and self._process_name:
+            from winclient_auto.utils.process import kill_processes  # noqa: PLC0415
+
+            kill_processes(self._process_name)

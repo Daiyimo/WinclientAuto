@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -79,6 +80,14 @@ def _print_dict(d: dict[str, Any], indent: int = 0) -> None:
         if isinstance(v, dict):
             click.echo(f"{prefix}{k}:")
             _print_dict(v, indent + 1)
+        elif isinstance(v, list):
+            click.echo(f"{prefix}{k}:")
+            for i, item in enumerate(v):
+                if isinstance(item, dict):
+                    click.echo(f"{prefix}  [{i}]:")
+                    _print_dict(item, indent + 2)
+                else:
+                    click.echo(f"{prefix}  [{i}]: {item}")
         else:
             click.echo(f"{prefix}{k}: {v}")
 
@@ -97,8 +106,8 @@ def _load_session() -> dict[str, Any]:
     if path.exists():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("会话文件损坏，已忽略: %s", exc)
     return {}
 
 
@@ -116,8 +125,13 @@ def _clear_session() -> None:
         path.unlink()
 
 
-def _get_playwright_page(session: dict[str, Any]) -> Any:
+def _get_playwright_page(
+    session: dict[str, Any],
+) -> tuple[Any, Any, Any]:
     """根据会话信息获取 Playwright Page 对象（Electron/Browser）。
+
+    Returns:
+        ``(playwright, browser, page)`` 三元组，调用方需在 finally 中关闭。
 
     Raises:
         SystemExit: 会话不存在或连接失败。
@@ -134,9 +148,13 @@ def _get_playwright_page(session: dict[str, Any]) -> Any:
         from playwright.sync_api import sync_playwright  # noqa: PLC0415
 
         pw = sync_playwright().start()
-        browser = pw.chromium.connect_over_cdp(endpoint)
-        page = browser.contexts[0].pages[0]
-        return pw, browser, page
+        try:
+            browser = pw.chromium.connect_over_cdp(endpoint)
+            page = browser.contexts[0].pages[0]
+            return pw, browser, page
+        except Exception:
+            pw.stop()
+            raise
     elif app_type == "browser":
         _err("browser 类型应用请直接通过 Python API 操作。")
     else:
@@ -266,7 +284,13 @@ def app_connect(cdp_port: int | None) -> None:
             inst.connect()
             _save_session({**session, "cdp_port": port})
             inst.close()
-        _out({"status": "success", "message": "已连接", "data": {"cdp_port": port}})
+            _out({"status": "success", "message": "已连接", "data": {"cdp_port": port}})
+        elif app_type == "native":
+            _err("native 类型不支持 connect 命令，请直接使用 'wca native' 子命令操作。")
+        elif app_type == "browser":
+            _err("browser 类型不支持 connect 命令，请通过 Python API 操作。")
+        else:
+            _err(f"不支持的 app_type '{app_type}'。")
 
     except Exception as exc:
         _err(str(exc))
@@ -491,7 +515,6 @@ def native() -> None:
 def native_list_windows(process_name: str | None) -> None:
     """列出可见的顶层窗口。"""
     try:
-        import pywinauto  # noqa: PLC0415
         from pywinauto import Desktop  # noqa: PLC0415
 
         desktop = Desktop(backend="uia")
@@ -529,7 +552,7 @@ def native_click(window: str, control: str) -> None:
     try:
         import pywinauto  # noqa: PLC0415
 
-        app = pywinauto.Application(backend="uia").connect(title_re=f".*{window}.*")
+        app = pywinauto.Application(backend="uia").connect(title_re=f".*{re.escape(window)}.*")
         win = app.top_window()
         win[control].click_input()
         _out({"status": "success", "message": f"已点击控件: {control}", "data": {"window": window, "control": control}})
@@ -549,7 +572,7 @@ def native_type(window: str, control: str, text: str) -> None:
     try:
         import pywinauto  # noqa: PLC0415
 
-        app = pywinauto.Application(backend="uia").connect(title_re=f".*{window}.*")
+        app = pywinauto.Application(backend="uia").connect(title_re=f".*{re.escape(window)}.*")
         win = app.top_window()
         win[control].type_keys(text, with_spaces=True)
         _out({"status": "success", "message": f"已输入文本到: {control}", "data": {"window": window, "control": control}})
@@ -569,7 +592,7 @@ def native_screenshot(window: str, output: str | None) -> None:
         import pywinauto  # noqa: PLC0415
         from PIL import Image  # noqa: PLC0415
 
-        app = pywinauto.Application(backend="uia").connect(title_re=f".*{window}.*")
+        app = pywinauto.Application(backend="uia").connect(title_re=f".*{re.escape(window)}.*")
         win = app.top_window()
         img = win.capture_as_image()
 
@@ -594,10 +617,10 @@ def _run_repl() -> None:
     """进入交互式 REPL 会话。"""
     import shlex  # noqa: PLC0415
 
-    click.secho("┌─────────────────────────────────────────┐", fg="cyan")
-    click.secho("│  wca — Windows Client Auto  REPL 模式   │", fg="cyan")
-    click.secho("│  输入 'help' 查看命令，'exit' 退出        │", fg="cyan")
-    click.secho("└─────────────────────────────────────────┘", fg="cyan")
+    click.secho("┌──────────────────────────────────────────┐", fg="cyan")
+    click.secho("│  wca — Windows Client Auto  REPL 模式    │", fg="cyan")
+    click.secho("│  输入 'help' 查看命令，'exit' 退出         │", fg="cyan")
+    click.secho("└──────────────────────────────────────────┘", fg="cyan")
 
     session = _load_session()
     if session:
@@ -622,6 +645,29 @@ def _run_repl() -> None:
         if line.lower() in ("exit", "quit", "q"):
             click.echo("再见！")
             break
+        if line.lower() == "help":
+            click.echo("""
+可用命令组：
+  app launch   -- 启动应用并建立连接
+  app connect  -- 连接到已运行的应用
+  app kill     -- 终止应用进程
+  app status   -- 查看会话状态
+  dom screenshot -- 截取页面截图
+  dom click    -- 点击元素
+  dom fill     -- 填入文本
+  dom get-text -- 获取元素文本
+  dom count    -- 统计元素数量
+  dom wait     -- 等待元素状态
+  dom eval     -- 执行 JavaScript
+  native list-windows -- 列出可见窗口
+  native click -- 点击原生控件
+  native type  -- 向原生控件输入文本
+  native screenshot -- 截取原生窗口
+
+选项：--json 以 JSON 格式输出
+退出：exit / quit / q / Ctrl+D
+""")
+            continue
 
         # 将输入拼成命令行参数传给 Click
         try:
@@ -636,4 +682,4 @@ def _run_repl() -> None:
         except SystemExit:
             pass
         except Exception as exc:
-            click.secho(f"错误: {exc}", fg="red")
+            click.secho(f"错误 [{type(exc).__name__}]: {exc}", fg="red")

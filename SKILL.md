@@ -60,6 +60,7 @@ wca
 - `--type electron|native|browser` 应用类型（默认 electron）
 - `--cdp-port <port>` CDP 调试端口（默认 9222，Electron 专用）
 - `--loading-route <fragment>` 加载路由片段，等待离开后认为加载完（如 `#/loading`）
+- `--url <url>` 入口 URL（browser 类型专用）
 
 ### dom — DOM 操作（Electron / Browser）
 

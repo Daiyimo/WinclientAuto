@@ -82,6 +82,11 @@ def inter_test_delay() -> Generator[None, None, None]:
     开发冒烟时可设为 1s：``WCA_TEST_DELAY=1 pytest -m smoke``。
     """
     yield
-    delay = float(os.environ.get("WCA_TEST_DELAY", str(_DEFAULT_TEST_DELAY)))
+    raw = os.environ.get("WCA_TEST_DELAY", str(_DEFAULT_TEST_DELAY))
+    try:
+        delay = float(raw)
+    except ValueError:
+        logger.warning("WCA_TEST_DELAY='%s' 不是有效数字，使用默认值 %ss", raw, _DEFAULT_TEST_DELAY)
+        delay = _DEFAULT_TEST_DELAY
     if delay > 0:
         time.sleep(delay)

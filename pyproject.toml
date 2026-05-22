@@ -30,6 +30,9 @@ dev = [
 [project.scripts]
 wca = "winclient_auto.cli:main"
 
+[project.entry-points.pytest11]
+winclient_auto = "winclient_auto.pytest_plugin.fixtures"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["winclient_auto*", "apps*"]
