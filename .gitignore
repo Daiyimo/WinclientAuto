@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# 测试 & 覆盖率
+.pytest_cache/
+htmlcov/
+coverage.xml
+.coverage
+
+# 类型检查缓存
+.mypy_cache/
+.ruff_cache/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 环境
+.env
+.venv/
+venv/
+env/
+
+# 会话状态（per-project）
+.wca_session.json
+
+# 截图（运行时产物）
+screenshots/
+
+# 报告（运行时产物，保留目录占位符）
+reports/*
+!reports/.gitkeep
+
+# Windows
+Thumbs.db
+Desktop.ini

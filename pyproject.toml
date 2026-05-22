@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "winclient-auto"
+version = "0.1.0"
+description = "Agent-friendly Windows client automation framework (Electron/CDP, Win32, Browser)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "playwright>=1.50.0",
+    "psutil>=5.9.0",
+    "pywinauto>=0.6.3",
+    "click>=8.1.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "allure-pytest>=2.13.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "types-psutil",
+    "pre-commit>=3.7.0",
+]
+
+[project.scripts]
+wca = "winclient_auto.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["winclient_auto*", "apps*"]
+
+# ── pytest ────────────────────────────────────────────────────────────────────
+# Allure 报告查看方式（Java 路径来自 PerfDog 内置 JRE）：
+#   set JAVA_HOME=D:\PerfDog(v11.3.250764)\jre
+#   D:\allure-2.35.1\bin\allure.bat generate reports/allure-results -o reports/allure-report --clean
+#   D:\allure-2.35.1\bin\allure.bat open reports/allure-report
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --junitxml=reports/results.xml --alluredir=reports/allure-results --clean-alluredir"
+markers = [
+    "smoke: 冒烟测试，核心流程快速验证",
+    "regression: 全量回归测试",
+]
+
+# 日志捕获配置（让 HTML 报告的 Log 栏显示 INFO 级别日志）
+log_level = "INFO"
+log_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+log_date_format = "%H:%M:%S"
+
+# ── ruff ──────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501", "UP007"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["winclient_auto", "apps"]
+
+# ── mypy ──────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_return_any = false
+disallow_untyped_defs = true
